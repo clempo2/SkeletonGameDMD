@@ -58,10 +58,8 @@ class BallSearch(Mode):
 		if self.enabled:
 			# Stop delayed coil activations in case a ball search has
 			# already started.
-			for coil in self.coils:
-				self.cancel_delayed('ball_search_coil1')
+			self.cancel_delayed('ball_search_coil1')
 			self.cancel_delayed('start_special_handler_modes')
-			self.cancel_delayed
 			schedule_search = 1
 			for sw_state_fn in self.stop_switch_check_functions:
 

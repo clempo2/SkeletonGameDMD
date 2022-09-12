@@ -696,12 +696,10 @@ class ScriptedLayer(Layer):
         # Composite the current script item's layer:
         layer = script_item['layer']
 
-        transition = None
-        if layer and layer.transition:
-            if self.is_new_script_item:
+        if self.is_new_script_item:
+            self.is_new_script_item = False
+            if layer and layer.transition:
                 layer.transition.start()
-
-        self.is_new_script_item = False
 
         if layer:
             self.buffer.clear()
@@ -729,15 +727,15 @@ class ScriptedLayer(Layer):
         return seconds
 
     def reset(self):
-        #print 'RESET SCRIPTED LAYER      RESET SCRIPTED LAYER ' + str(self.script_index)
         self.script_index = 0
-        #print self.script_index
         self.frame_start_time = None
+        self.is_new_script_item = True
+        self.last_layer = None
+
         #now reset the layers
         for layer_item in self.script:
-           # print layer_item['layer']
-           if layer_item['layer'] != None:
-               layer_item['layer'].reset()
+            if layer_item['layer'] != None:
+                layer_item['layer'].reset()
 
     def regenerate(self):
         """ calls regenerate on layers that support it """

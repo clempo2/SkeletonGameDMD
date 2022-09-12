@@ -137,10 +137,10 @@ class Attract(Mode):
         self.logger.debug("Attract: Playing next sound: %s" % sound_key)
 
         if(sound_key in self.game.sound.music):
-            if(self.game.user_settings['Machine (Standard)']['Attract Mode Music']=='On'):
+            if(self.game.user_settings[self.game.settings_sections['Machine']]['Attract Mode Music']=='On'):
                 self.game.sound.play_music(sound_key)
         else:
-            if(self.game.user_settings['Machine (Standard)']['Attract Mode Sounds']=='On'):
+            if(self.game.user_settings[self.game.settings_sections['Machine']]['Attract Mode Sounds']=='On'):
                 self.game.sound.play(sound_key)
 
     def stop_sounds(self):

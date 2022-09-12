@@ -30,23 +30,21 @@ def value_for_key_path(keypath, default=None):
 def load():
     global values, path
     logger = logging.getLogger('game.config')
-    curr_path = os.path.expanduser('./config.yaml')
-    system_path = os.path.expanduser('~/.pyprocgame/config.yaml')
-    if os.path.exists(curr_path):
-         path = curr_path
-    else:
-        logger.warning('pyprocgame configuration not found at %s. Checking %s.' % (curr_path, system_path))
-        if os.path.exists(system_path):
-            path = system_path
-        else:
-            logger.warning('pyprocgame configuration not found at %s' % system_path)
-            return
-    logger.info('pyprocgame configuration found at %s' % path)
+    config_path = os.path.expanduser('./config/config.yaml')
+    if not os.path.exists(config_path):
+        logger.info('SkeletonGame configuration not found at ' + config_path)
+        config_path = os.path.expanduser('./config.yaml')
+        if not os.path.exists(config_path):
+            logger.info('SkeletonGame configuration not found at ' + config_path)
+            config_path = os.path.expanduser('~/.pyprocgame/config.yaml')
+            if not os.path.exists(config_path):
+                logger.info('SkeletonGame configuration not found at ' + config_path)
+                logger.warning('SkeletonGame configuration not found')
+                return
+    logger.info('SkeletonGame configuration found at %s' % config_path)
     try:
-        values = yaml.load(open(path, 'r'))
-    except yaml.scanner.ScannerError, e:
-        logger.error('Error loading pyprocgame config from %s; your configuration file has a syntax error in it!\nDetails: %s', path, e)
+        values = yaml.load(open(config_path, 'r'))
     except Exception, e:
-        logger.error('Error loading pyprocgame config from %s: %s', path, e)
+        logger.error('Error loading SkeletonGame configuration file %s: %s', config_path, e)
 
 load()

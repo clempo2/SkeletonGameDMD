@@ -113,8 +113,8 @@ class T2Game(SkeletonGame):
                         handler=self.coils[sw.name].pulse)
                     time_to_fire+=0.5 
                     
-## the following just set things up such that you can run Python ExampleGame.py
-## and it will create an instance of the correct game objct and start running it!
+## the following just set things up such that you can run Python T2Game.py
+## and it will create an instance of the correct game object and start running it!
 
 if __name__ == '__main__':
     # change T2Game to be the class defined in this file!

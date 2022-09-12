@@ -103,6 +103,17 @@ class SkeletonGame(BasicGame):
     """ SkeletonGame is intended to be the new super-class for your game class.  It provides
         more of the functionality that one expects to be in a 'generic' 'modern' pinball machine
     """
+
+    # The default section names in the game_default_settings.yaml file
+    # your game class can overwrite this class variable to rename the settings sections in its game_default_settings.yaml file
+    settings_sections = {
+        'Machine': 'Machine (Standard)',
+        'Coils': 'Machine (Coils)',
+        'Sound': 'Sound',
+        'Gameplay': 'Gameplay (Feature)',
+        'Replay': 'Replay'
+    }
+
     def __init__(self, machineYamlFile, curr_file_path, machineType=None):
         try:
             self.cleaned_up = False
@@ -485,7 +496,7 @@ class SkeletonGame(BasicGame):
             return
 
         if(time is None):
-            time = self.user_settings['Gameplay (Feature)']['Ball Save Timer']
+            time = self.user_settings[self.settings_sections['Gameplay']]['Ball Save Timer']
 
         self.logger.debug("ball saver enabled balls=[%d], time left=[%d]" % (num_balls_to_save,time))
         self.ball_save.start(num_balls_to_save, time, now, allow_multiple_saves, tick_rate)
@@ -738,14 +749,6 @@ class SkeletonGame(BasicGame):
         # reload settings
         self.load_settings_and_stats()
 
-        # try to set the game up to be in a clean state from the outset:
-        if(self.trough.num_balls() < self.num_balls_total):
-            self.logger.info("Skel: RESET: trough isn't full [%d of %d] -- requesting search" % (self.trough.num_balls(), self.num_balls_total))
-            if(self.use_ballsearch_mode):
-                self.ball_search.perform_search(5, silent=True)
-            else:
-                self.do_ball_search(silent=True)
-
         self.modes.add(self.sound)
         # handle modes that need to be alerted of the game reset!
         for m in self.known_modes[AdvancedMode.System]:
@@ -763,7 +766,6 @@ class SkeletonGame(BasicGame):
         self.trough.ball_save_callback = self.ball_save.launch_callback
         self.trough.num_balls_to_save = self.ball_save.get_num_balls_to_save
         self.ball_save.trough_enable_ball_save = self.trough.enable_ball_save
-        # trough fixes
 
         self.modes.add(self.ball_save)
 
@@ -771,21 +773,29 @@ class SkeletonGame(BasicGame):
             self.score_display.reset()
             self.modes.add(self.score_display)
 
+        if(self.use_osc_input):
+            self.modes.modes.append(self.osc)
+
+        self.modes.add(self.dmdHelper)
+        self.modes.add(self.switchmonitor)
+
         self.modes.add(self.ball_search)
         if(self.use_ballsearch_mode):
             self.ball_search.disable()
 
-        # initialize the mode variables; the general form is:
-        # self.varName = fileName.classModeName(game=self)
-        # Note this creates the mode and causes the Mode's constructor
-        # function --aka __init__()  to be run
+        # try to set the game up to be in a clean state from the outset
+        if(self.trough.num_balls() < self.num_balls_total):
+            self.logger.info("Skel: RESET: trough isn't full [%d of %d] -- requesting search" % (self.trough.num_balls(), self.num_balls_total))
+            # let the pending ballsearch reset and stop switch events be delivered first
+            # we don't want a stop switch stopping the search the just initiated
+            # this is more an issue when the machine has just been powered up  
+            self.switchmonitor.delay('perform_search', event_type=None, delay=0.5, handler=self.__perform_search)
 
-        if(self.use_osc_input):
-            self.modes.modes.append(self.osc)
-
-
-        self.modes.add(self.dmdHelper)
-        self.modes.add(self.switchmonitor)
+    def __perform_search(self):
+            if (self.use_ballsearch_mode):
+                self.ball_search.perform_search(5, silent=True)
+            else:
+                self.do_ball_search(silent=True)
 
     def start_attract_mode(self):
         self.modes.add(self.attract_mode) # plays the attract mode and kicks off the game
@@ -850,21 +860,20 @@ class SkeletonGame(BasicGame):
 
         if(self.load_settings('game_default_settings.yaml','game_user_settings.yaml')):
             # settings changed as a result of reconciling with the default template! re-save
-            self.user_settings['Sound']['Initial volume'] = game_volume
+            self.user_settings[self.settings_sections['Sound']]['Initial volume'] = game_volume
             self.logger.warning('settings changed.  Re-Saving!')
             self.save_settings()
+
+        self.user_settings[self.settings_sections['Sound']]['Initial volume'] = game_volume
 
         # for every coil in the list, if there's a setting that matches this label, take the value as the new default
         for c in self.coils:
             label = c.label
-            if(label is not None and label in self.user_settings['Machine (Coils)']):
-                c.default_pulse_time = self.user_settings['Machine (Coils)'][label]
+            if(label is not None and label in self.user_settings[self.settings_sections['Coils']]):
+                c.default_pulse_time = self.user_settings[self.settings_sections['Coils']][label]
                 self.log("Settings loaded: setting coil '%s' to strength: %d" % (label, c.default_pulse_time))
 
-        self.balls_per_game = self.user_settings['Machine (Standard)']['Balls Per Game']
-        # self.auto_plunge_strength = self.user_settings['Machine (Coils)']['Auto Plunger']
-
-        self.user_settings['Sound']['Initial volume'] = game_volume
+        self.balls_per_game = self.user_settings[self.settings_sections['Machine']]['Balls Per Game']
 
         ## high score stuff:
         self.highscore_categories = []
@@ -876,7 +885,6 @@ class SkeletonGame(BasicGame):
 
         for category in self.highscore_categories:
             category.load_from_game(self)
-
 
     def save_settings(self, filename=None):
         if(filename is None):
@@ -994,13 +1002,16 @@ class SkeletonGame(BasicGame):
 
             # ensure this isn't a situation of a fast-drain when more balls are pending launch
             if(self.trough.num_balls_to_launch >= 1):
-                self.logger.warning("one ball in play, but more balls are pending launch (supressing evt_single_ball_play)")
+                self.logger.warning("one ball in play, but more balls are pending launch (suppressing evt_single_ball_play)")
             elif(self.game_tilted):
-                self.logger.info("one ball in play, but game is tilted (supressing evt_single_ball_play)")
+                self.logger.info("one ball in play, but game is tilted (suppressing evt_single_ball_play)")
             else:
                 self.notifyModes('evt_single_ball_play', args=None, event_complete_fn=None)
         else:
-            self.notifyModes('evt_mb_drain', args=None, event_complete_fn=None)
+            if(self.game_tilted):
+                self.logger.info("multiball drain, but game is tilted (suppressing evt_mb_drain)")
+            else:
+                self.notifyModes('evt_mb_drain', args=None, event_complete_fn=None)
 
     def your_search_is_over(self):
         """ all balls have been accounted for --if you were blocking a game start, stop that. """
@@ -1015,17 +1026,15 @@ class SkeletonGame(BasicGame):
         """ decrease volume and store the new setting """
         volume = self.sound.volume_down()
         self.quickNotifyModes('evt_volume_down', args=volume, event_complete_fn=None)
-        self.user_settings['Sound']['Initial volume'] = int(volume)
+        self.user_settings[self.settings_sections['Sound']]['Initial volume'] = int(volume)
         self.save_volume()
-        # self.save_settings()
 
     def volume_up(self):
         """ increase volume and store the new setting """
         volume = self.sound.volume_up()
         self.quickNotifyModes('evt_volume_up', args=volume, event_complete_fn=None)
-        self.user_settings['Sound']['Initial volume'] = int(volume)
+        self.user_settings[self.settings_sections['Sound']]['Initial volume'] = int(volume)
         self.save_volume()
-        # self.save_settings()
 
     def request_additional_player(self):
         """ attempt to add an additional player, but honor the max_players setting """
@@ -1235,11 +1244,14 @@ class SkeletonGame(BasicGame):
             self.modes.remove(m())
         pass
 
-        seq_manager = highscore.HD_EntrySequenceManager(game=self, priority=2, multiline=self.use_multiline_score_entry)
+        seq_manager = self.create_entry_sequence_manager()
         seq_manager.finished_handler = self.high_score_entry_completed
         seq_manager.logic = highscore.CategoryLogic(game=self, categories=self.highscore_categories)
         seq_manager.ready_handler = self.__pre_high_score_entry
         self.modes.add(seq_manager)
+
+    def create_entry_sequence_manager(self):
+        return highscore.HD_EntrySequenceManager(game=self, priority=2, multiline=self.use_multiline_score_entry)
 
     def __pre_high_score_entry(self, seq_manager, category):
         self.notifyModes('evt_initial_entry', args=category, event_complete_fn=seq_manager.prompt)

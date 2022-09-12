@@ -11,17 +11,17 @@ class Replay(Mode):
 
 	def mode_started(self):
 
-		self.replay_type = self.game.user_settings['Replay']['Replay Type']
+		self.replay_type = self.game.user_settings[self.game.settings_sections['Replay']]['Replay Type']
 		if self.replay_type == 'auto':
 			self.num_levels = 1
 		else:
-			self.num_levels = self.game.user_settings['Replay']['Replay Levels']
-		self.replay_percentage = float(self.game.user_settings['Replay']['Replay Percentage'])
-		self.replay_boost = self.game.user_settings['Replay']['Replay Boost']
-		self.default_scores = [self.game.user_settings['Replay']['Replay Level 1'],
-		                       self.game.user_settings['Replay']['Replay Level 2'],
-		                       self.game.user_settings['Replay']['Replay Level 3'],
-		                       self.game.user_settings['Replay']['Replay Level 4']]
+			self.num_levels = self.game.user_settings[self.game.settings_sections['Replay']]['Replay Levels']
+		self.replay_percentage = float(self.game.user_settings[self.game.settings_sections['Replay']]['Replay Percentage'])
+		self.replay_boost = self.game.user_settings[self.game.settings_sections['Replay']]['Replay Boost']
+		self.default_scores = [self.game.user_settings[self.game.settings_sections['Replay']]['Replay Level 1'],
+		                       self.game.user_settings[self.game.settings_sections['Replay']]['Replay Level 2'],
+		                       self.game.user_settings[self.game.settings_sections['Replay']]['Replay Level 3'],
+		                       self.game.user_settings[self.game.settings_sections['Replay']]['Replay Level 4']]
 
 
 		self.set_replay_scores()
