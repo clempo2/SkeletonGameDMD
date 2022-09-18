@@ -8,7 +8,6 @@ __all__ = [
 	'highscore',
 	'lamps',
 	'modes',
-	'service',
 	'sound',
 	'util',
 	'tools',

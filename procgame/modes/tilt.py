@@ -1,7 +1,3 @@
-# Defines the tilt mode.  Expects asset_list.yaml entries for:
-# sounds: 'tilt warning' and 'tilt'
-# fonts: tilt_small and tilt_big
-
 import logging
 import procgame
 from ..game import Mode
@@ -40,12 +36,14 @@ class TiltMonitorMode(AdvancedMode):
             self.add_switch_handler(name=tilt_sw, event_type='active', delay=None, handler=self.tilt_handler)
         if slam_tilt_sw:
             self.add_switch_handler(name=slam_tilt_sw, event_type='active', delay=None, handler=self.slam_tilt_handler)
-        self.num_tilt_warnings = 2
         self.tilt_bob_settle_time = 2.0
         self.tilted = False
 
+    def evt_player_added(self, player):
+        num_tilt_warnings = self.game.user_settings[self.game.settings_sections['Machine']].get('Number of tilt warnings', 2)
+        player.setState('warnings_remaining', num_tilt_warnings)
+
     def tilt_reset(self):
-        self.times_warned = 0
         self.tilted = False
         self.tilt_status = 0
         self.previous_warning_time = None
@@ -61,11 +59,13 @@ class TiltMonitorMode(AdvancedMode):
         if(self.previous_warning_time is not None) and ((now - self.previous_warning_time) < self.tilt_bob_settle_time):
             self.logger.info('tilt bob still swinging from previous warning')
             return
-        else:
-            self.previous_warning_time = now
-            self.logger.info('about to issue warning %d of %d' % (self.times_warned+1, self.num_tilt_warnings+1))
 
-        if self.times_warned == self.num_tilt_warnings:
+        self.previous_warning_time = now
+        warnings_remaining = self.game.getPlayerState('warnings_remaining')
+        num_tilt_warnings = self.game.user_settings[self.game.settings_sections['Machine']].get('Number of tilt warnings', 2)
+        self.logger.info('about to issue warning, player has %d warnings left of %d' % (warnings_remaining, num_tilt_warnings))
+
+        if warnings_remaining <= 0:
             if not self.tilted:
                 self.logger.info('TILTED')
                 self.tilted = True
@@ -73,8 +73,10 @@ class TiltMonitorMode(AdvancedMode):
             else:
                 self.logger.info('(ALREADY/STILL) TILTED')
         else:
-            self.times_warned += 1
-            self.game.tilt_warning(self.times_warned)
+            warnings_remaining -= 1
+            self.game.setPlayerState('warnings_remaining', warnings_remaining)
+            times_warned = num_tilt_warnings - warnings_remaining
+            self.game.tilt_warning(times_warned)
 
     def slam_tilt_handler(self, sw):
         self.slam_tilt_callback()

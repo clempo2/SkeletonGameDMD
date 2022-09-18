@@ -171,6 +171,11 @@ class AssetManager(object):
         sdl2_DisplayManager.inst().switch_target(bk)
         if self.game.use_proc_dmd:
             self.game.dmd.proc_dmd_draw(self.frame)
+
+        if self.game.proc:
+            self.game.proc.watchdog_tickle()
+            self.game.proc.flush()
+
         if self.game.desktop:
             self.game.desktop.draw(self.frame) # desktop handles pixel scaling
         else:

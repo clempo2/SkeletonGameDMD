@@ -729,6 +729,7 @@ class ScriptedLayer(Layer):
     def reset(self):
         self.script_index = 0
         self.frame_start_time = None
+        self.force_direction = None
         self.is_new_script_item = True
         self.last_layer = None
 
