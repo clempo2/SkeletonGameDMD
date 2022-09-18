@@ -123,7 +123,6 @@ class GameController(object):
     def reset(self):
         """Reset the game state as a slam tilt might."""
         self.ball = 0
-        self.old_players = []
         self.old_players = self.players[:]
         self.players = []
         self.current_player_index = 0

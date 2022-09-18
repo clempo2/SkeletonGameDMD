@@ -424,6 +424,9 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
             self.sounds[key]['sound_list'][0].stop()
             # TODO: HOW DOES THIS WORK WITH VOICE?
 
+    def stop_all(self):
+        mixer.stop()
+
     def pause_music(self, channel=CH_ALL_MUSIC_CHANNELS):
         if(channel==CH_ALL_MUSIC_CHANNELS):
             self.pause(CH_MUSIC)

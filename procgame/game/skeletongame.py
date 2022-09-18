@@ -721,13 +721,16 @@ class SkeletonGame(BasicGame):
     def reset(self):
         self.logger.info("Skel: RESET()")
 
-        # reset mid-game can leave Lamps, coils or flippers on.  Turn them OFF
+        # reset mid-game can leave Lamps, coils, flippers or sounds on.  Turn them OFF
         # as modes might use delay() to disable them, but those won't run now
         self.disableAllLamps()
         self.disableAllCoils()
 
         self.enable_flippers(False)
         self.enable_alphanumeric_flippers(False)
+
+        self.sound.fadeout_music()
+        self.sound.stop_all()
 
         self.dmdHelper.reset()
         if(hasattr(self,'bonus_mode')):
