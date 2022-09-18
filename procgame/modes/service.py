@@ -219,8 +219,8 @@ class StatsDisplay(ServiceModeList):
 		self.value_layer = TextLayer(self.game.dmd.width/2, self.game.dmd.height/2, font, "center")
 		self.score_layer = TextLayer(self.game.dmd.width/2, self.game.dmd.height*3/4, font, "center")
 		self.items = []
-		if type(itemlist) == type({}):
-			for item in sorted(itemlist.iterkeys()):
+		if issubclass(type(itemlist), dict):
+			for item in itemlist.iterkeys():
 				self.items.append( StatsItem(str(item), itemlist[item]) )
 		else:
 			for i in range(len(itemlist)):
@@ -267,7 +267,7 @@ class Settings(ServiceModeList):
 		self.name = name
 		self.items = []
 		self.font = font
-		for section in sorted(itemlist.iterkeys()):
+		for section in itemlist.iterkeys():
 			self.items.append( SettingsEditor( self.game, priority + 1, font, str(section),itemlist[section] ))
 
 class SettingsEditor(ServiceModeList):
@@ -282,7 +282,7 @@ class SettingsEditor(ServiceModeList):
 		self.items = []
 		self.value_layer = TextLayer(self.game.dmd.width/2, self.game.dmd.height/2, font, "center")
 		self.layer = GroupedLayer(self.game.dmd.width, self.game.dmd.height, [self.title_layer, self.item_layer, self.value_layer, self.instruction_layer], opaque=True)
-		for item in sorted(itemlist.iterkeys()):
+		for item in itemlist.iterkeys():
 			#self.items.append( EditItem(str(item), itemlist[item]['options'], itemlist[item]['value'] ) )
 			if 'increments' in itemlist[item]:
 				num_options = (itemlist[item]['options'][1]-itemlist[item]['options'][0]) / itemlist[item]['increments']

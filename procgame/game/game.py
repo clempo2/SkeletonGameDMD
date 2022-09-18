@@ -12,6 +12,7 @@ from procgame import util
 from mode import *
 from pdb import PDBConfig, LED
 from procgame import LEDs
+from collections import OrderedDict
 
 def config_named(name):
     if not os.path.isfile(name): # If we cannot find this file easily, try searching the config_path:
@@ -374,7 +375,7 @@ class GameController(object):
         """
         settings_changed = False
 
-        self.user_settings = {}
+        self.user_settings = OrderedDict()
         self.settings = yaml.load(open(template_filename, 'r'))
         if os.path.exists(user_filename):
             self.user_settings = yaml.load(open(user_filename, 'r'))
@@ -384,7 +385,7 @@ class GameController(object):
         for section in self.settings:
             for item in self.settings[section]:
                 if not section in self.user_settings:
-                    self.user_settings[section] = {}
+                    self.user_settings[section] = OrderedDict()
                     settings_changed = True
                 if not item in self.user_settings[section]:
                     settings_changed = True
@@ -458,7 +459,7 @@ class GameController(object):
 
         See also: :meth:`save_game_data`
         """
-        self.game_data = {}
+        self.game_data = OrderedDict()
         template_file = open(template_filename,'r')
         template = yaml.load(template_file)
         file.close(template_file)
