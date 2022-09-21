@@ -1,5 +1,4 @@
 from ..game import Mode
-from .. import dmd
 import logging
 
 class BallSearch(Mode):
@@ -80,12 +79,12 @@ class BallSearch(Mode):
 
 	def stop(self,sw):
 		self.logger.debug("countdown STOPPED via '%s'" % ("" if sw is None else sw))
-		self.cancel_delayed(name='ball_search_countdown');
+		self.cancel_delayed('ball_search_countdown');
+		self.cancel_delayed('ball_search_coil1');
 
 	def full_stop(self):
+		# for backwards compatibility, now same as stop()
 		self.stop('None')
-		for coil in self.coils:
-			self.cancel_delayed('ball_search_coil1')
 
 	def perform_search(self, completion_wait_time, completion_handler = None, silent=False):
 		self.logger.debug("perform_search(completion_wait_time=%d)" % completion_wait_time)

@@ -356,13 +356,14 @@ class Trough(Mode):
         #   probably best to adjust this to make sure the ball is really "away"
         if self.game.switches[self.shooter_lane_switchname].is_active() or \
            self.game.switches[self.shooter_lane_switchname].time_since_change() < self.inactive_shooter_time:
-            # Wait 1 second before trying again.
-            self.logger.info("Cannot feed ball as shooter lane isn't ready [pending=%d (stealth=%d)] --retry in 1s" % (self.num_balls_to_launch, self.num_balls_to_stealth_launch))
+            # Wait before trying again but keep the delay tight to speed up multiball auto plunge
+            delay = 1.0 if self.game.switches[self.shooter_lane_switchname].is_active() else \
+                self.inactive_shooter_time - self.game.switches[self.shooter_lane_switchname].time_since_change() + 0.001
+            self.logger.info("Cannot feed ball as shooter lane isn't ready [pending=%d (stealth=%d)] --retry in %f sec" % (self.num_balls_to_launch, self.num_balls_to_stealth_launch, delay))
             # stalling for shooter lane clearance
-            self.delay(name='launch', event_type=None, delay=1.0, \
-                   handler=self.common_launch_code)
+            self.delay(name='launch', event_type=None, delay=delay, handler=self.common_launch_code)
         elif(self.num_balls()<1):
-            self.logger.info("Cannot feed ball as shooter lane as trough is empty! [pending=%d (stealth=%d)] --retry in 1s" % (self.num_balls_to_launch, self.num_balls_to_stealth_launch))
+            self.logger.info("Cannot feed ball as trough is empty! [pending=%d (stealth=%d)] --retry in 1s" % (self.num_balls_to_launch, self.num_balls_to_stealth_launch))
             # we don't do anything else, because the trough handler will auto-call this when a ball drains
         else:
             # feed the shooter lane (via trough coil)
