@@ -58,8 +58,10 @@ class Mode(object):
         super(Mode, self).__init__()
         self.game = game
         self.priority = priority
+        self.__is_started = False
         self.__accepted_switches = []
         self.__delayed = []
+        self.__cancelled_delayed = []
         self.__children = []
         self.__scan_switch_handlers()
     
@@ -148,7 +150,7 @@ class Mode(object):
         ``event_type``
             'closed', 'open', or ``None``.
         ``delay``
-            Number of seconds to wait before calling the handler (float).
+            Number of seconds to wait before calling the handler (float). Must be non-negative.
         ``handler``
             Function to be called once delay seconds have elapsed.
         ``param``
@@ -170,13 +172,15 @@ class Mode(object):
                 # Store name to cancel the delay later: self.cancel_delayed(self.delayed_name)
         
         """
+        if delay < 0: # this check is needed to guarantee proper execution of delayed handlers already registered
+            raise ValueError, "Attempted to schedule delayed handler " + str(name) + " with a negative delay: " + str(delay)
         if type(event_type) == str:
             event_type = {'closed':1, 'open':2}[event_type]
         if name == None:
             name = 'anon_delay'+str(uuid.uuid1())
         self.__delayed.append(Mode.Delayed(name=name, time=time.time()+delay, handler=handler, event_type=event_type, param=param))
         try:
-            self.__delayed.sort(lambda x, y: int((x.time - y.time)*100))
+            self.__delayed.sort(lambda x, y: int((x.time - y.time)*100)) # this must be a stable sort
         except TypeError, ex:
             # Debugging code:
             for x in self.__delayed:
@@ -186,11 +190,10 @@ class Mode(object):
     
     def cancel_delayed(self, name):
         """Removes the given named delays from the delayed list, cancelling their execution."""
-        if type(name) == list:
-            for n in name:
-                self.cancel_delayed(n)
-        else:
-            self.__delayed = filter(lambda x: x.name != name, self.__delayed)
+        names = name if type(name) == list else [name]
+        self.__delayed = filter(lambda x: x.name not in names, self.__delayed)
+        if name not in self.__cancelled_delayed:
+            self.__cancelled_delayed.append(name)
 
     def delay_info(self,name):
         for x in self.__delayed:
@@ -217,6 +220,10 @@ class Mode(object):
             if d.name == name:
                 return True
         return False
+
+    def clear_delayed(self):
+        self.__delayed[:] = [] # clear in place to abort the for loop in dispatch_delayed() if it is in our call stack
+        self.__cancelled_delayed = []
     
     def handle_event(self, event):
         # We want to turn this event into a function call.
@@ -231,6 +238,8 @@ class Mode(object):
         
         filt = lambda accepted: (accepted.event_type == event['type']) and (accepted.name == sw_name)
         for accepted in filter(filt, self.__accepted_switches):
+            if not self.__is_started:
+                break
             if accepted.delay == None or accepted.delay == 0:
                 handler = accepted.handler
                 result = handler(self.game.switches[accepted.name])
@@ -262,25 +271,38 @@ class Mode(object):
         This method should not be invoked directly; it is called by the GameController run loop.
         """
         pass
+
     def mode_tick(self):
         """Called by the GameController run loop during each loop when the mode is running."""
         pass
-        
+
     def dispatch_delayed(self):
         """Called by the GameController to dispatch any delayed events."""
+        # implementation requirements:
+        #   caller makes sure the mode is started
+        #   removing a mode clears its __delayed list in place to abort the dispatch_delayed for loop early
+        #   cancelling a delay must assign a new list to __delayed (never remove individual delays in place, that breaks the dispatch_delayed iteration)
+        #   cancelling a delay adds its name to __cancelled_delayed 
+        #   new delays can be appended in place with time > t (no negative delays)
+        #   sorting delays uses a stable sort
+        self.__cancelled_delayed = [] # blacklist of delays cancelled during this dispatch_delayed
         t = time.time()
+
         for item in self.__delayed:
             if item.time <= t:
-                handler = item.handler
-                if item.param != None:
-                    handler(item.param)
-                else:
-                    handler()
+                if item.name not in self.__cancelled_delayed:
+                    handler = item.handler
+                    if item.param != None:
+                        handler(item.param)
+                    else:
+                        handler()
+            else:
+                break
         self.__delayed = filter(lambda x: x.time > t, self.__delayed)
 
     def is_started(self):
         """Returns ``True`` if this mode is on the mode queue (:meth:`mode_started` has already been called)."""
-        return self in self.game.modes
+        return self.__is_started  # __is_started is True if and only if self in self.game.modes
 
     def add_child_mode(self, mode):
         """Add *mode* as a child of the receiver.
@@ -297,7 +319,7 @@ class Mode(object):
             return mode
         self.__children.append(mode)
         mode.parent_mode = self
-        if self.is_started():
+        if self.__is_started:
             self.game.modes.add(mode)
         return mode
     
@@ -313,12 +335,13 @@ class Mode(object):
         if mode in self.__children:
             self.__children.remove(mode)
             mode.parent_mode = None
-            if self.is_started():
+            if self.__is_started:
                 self.game.modes.remove(mode)
         return mode
     
     def __str__(self):
         return "%s  pri=%d" % (type(self).__name__, self.priority)
+
     def update_lamps(self):
         """Called by the GameController re-apply active lamp schedules"""
         pass
@@ -368,27 +391,40 @@ class ModeQueue(object):
         self.game = game
         self.modes = []
         self.logger = logging.getLogger('game.modes')
-        
+
+    def reset(self):
+        for mode in self.modes:
+            mode._Mode__is_started = False
+            mode.clear_delayed()
+        self.modes = []
+
     def add(self, mode):
-        if mode in self.modes:
-            raise ValueError, "Attempted to add mode "+str(mode)+", already in mode queue."
-        self.modes += [mode]
-        # Sort by priority, descending:
-        self.modes.sort(lambda x, y: y.priority - x.priority)
-        self.changed = True
-        self.logger.info("Added %s.", str(mode))
-        mode.mode_started()
-        if mode == self.modes[0]:
-            mode.mode_topmost()
+        add_modes = mode if type(mode) == list else [mode]
+        for m in add_modes:
+            if m in self.modes:
+                raise ValueError, "Attempted to add mode "+str(m)+", already in mode queue."
+            self.modes += [m]
+            # Sort by priority, descending:
+            self.modes.sort(lambda x, y: y.priority - x.priority)
+            self.changed = True
+            self.logger.info("Added %s.", str(m))
+            m._Mode__is_started = True
+            m.mode_started()
+            if m == self.modes[0]:
+                m.mode_topmost()
 
     def remove(self, mode):
-        for idx, m in enumerate(self.modes):
-            if m == mode:
-                del self.modes[idx]
-                self.changed = True
-                self.logger.info("Removed %s.", str(mode))
-                mode.mode_stopped()
-                break
+        remove_modes = mode if type(mode) == list else [mode]
+        for rm in remove_modes:
+            for idx, m in enumerate(self.modes): # this iterator is not vulnerable to changes in self.modes since we break as soon as we find a match
+                if m == rm:
+                    del self.modes[idx]
+                    self.changed = True
+                    self.logger.info("Removed %s.", str(rm))
+                    rm._Mode__is_started = False
+                    rm.clear_delayed()
+                    rm.mode_stopped()
+                    break
         if len(self.modes) > 0:
             self.modes[0].mode_topmost()
     
@@ -407,16 +443,19 @@ class ModeQueue(object):
     def handle_event(self, event):
         modes = copy.copy(self.modes) # Make a copy so if a mode is added we don't get into a loop.
         for mode in modes:
-            handled = mode.handle_event(event)
-            if handled:
-                break
+            if mode._Mode__is_started:
+                handled = mode.handle_event(event)
+                if handled:
+                    break
     
     def tick(self):
         modes = copy.copy(self.modes) # Make a copy so if a mode is added we don't get into a loop.
         for mode in modes:
-            mode.dispatch_delayed()
-            mode.mode_tick()
-    
+            if mode._Mode__is_started: # Make sure the mode was not stopped since the start of this loop
+                mode.dispatch_delayed()
+            if mode._Mode__is_started:
+                mode.mode_tick()
+
     def log_queue(self, log_level=logging.INFO):
         log_rows = []
         

@@ -126,7 +126,7 @@ class GameController(object):
         self.old_players = self.players[:]
         self.players = []
         self.current_player_index = 0
-        self.modes.modes = []
+        self.modes.reset()
 
     def current_player(self):
         """Returns the current :class:`Player` as described by :attr:`current_player_index`."""

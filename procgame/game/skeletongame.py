@@ -91,6 +91,8 @@ def run_proc_game(game_class):
         # if the game crashes, end_run_loop might not be called
         if(game is not None):
             game.end_run_loop()
+            if game.proc:
+                del game.proc
         else:
             cleanup()
 
