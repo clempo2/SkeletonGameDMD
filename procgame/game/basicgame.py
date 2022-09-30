@@ -8,6 +8,7 @@ import pinproc
 import time
 import datetime
 import traceback
+import sdl2
 
 class BasicGame(GameController):
 	""":class:`BasicGame` is a subclass of :class:`~procgame.game.GameController` 
@@ -68,16 +69,31 @@ class BasicGame(GameController):
 					switch_number = self.switches[switch_name].number
 				else:
 					switch_number = pinproc.decode(self.machine_type, switch_name)
-				if(type(k)!=int): # letter keys are added as letters (obv)
-					self.desktop.add_key_map(ord(str(k)), switch_number)
-				elif(k<10): # 0-9 as keys
-					self.desktop.add_key_map(ord(str(k)), switch_number)
-				else: # numbers used as bindings for specials -- examples below
-					self.desktop.add_key_map(k, switch_number)
-					# K_LSHIFT: 304
-					# K_RSHIFT: 303
-					# K_F1: 	282
-					# K_F12: 	293
+				mods = 0
+				if type(k) == str:
+					if len(k) == 1:
+						# key is character
+						key = ord(k)
+					else:
+						# MOD1+MOD2+...+KEY  where MODn is a modifier name and KEY is a keycode name
+						# for example LSHIFT+TAB which means KMOD_LSHIFT modifier with SDLK_TAB key
+						ks = k.split('+')
+						mods = sum([getattr(sdl2.keycode, 'KMOD_' + m) for m in ks[:-1]])
+						if len(ks[-1]) == 1:
+							key = ord(ks[-1])
+						else:
+							key = getattr(sdl2.keycode, 'SDLK_' + ks[-1])
+				elif type(k) == int:
+					if k < 10:
+						# digit character
+						key = ord(str(k))
+					else:
+						# integer keycode, i.e. the value of sdl2.keycode.SDLK_xxxx
+						# for example SDLK_LSHIFT is 1073742049
+						key = k
+				else:
+					raise ValueError('invalid key name in config file: ' + str(k))
+				self.desktop.add_key_map(key, switch_number, mods)
 
 	def reset(self):
 		"""Calls super's reset and adds the :class:`ScoreDisplay` mode to the mode queue."""

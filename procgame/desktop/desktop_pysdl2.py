@@ -45,7 +45,6 @@ class Desktop():
 
     def __init__(self):
         print 'Desktop init begun.'
-        self.ctrl = 0
         self.i = 0
         self.key_events = []
 
@@ -116,9 +115,11 @@ class Desktop():
         else:
             self.draw = self.draw_no_dot_effect
 
-    def add_key_map(self, key, switch_number):
-        """Maps the given *key* to *switch_number*, where *key* is one of the key constants in :mod:`pygame.locals`."""
-        self.key_map[key] = switch_number
+    def add_key_map(self, key, switch_number, mods=0):
+        """Maps the given *key* to *switch_number*, where *key* is one of the key constants in :mod:`sdl2.keycode` but only if the given key modifiers in *mods* are active."""
+        if not key in self.key_map:
+            self.key_map[key] = []
+        self.key_map[key].append((mods, switch_number))
 
     def clear_key_map(self):
         """Empties the key map."""
@@ -135,26 +136,30 @@ class Desktop():
             key_event = {}
             #print("Key: %s" % event.key.keysym.sym)
             if event.type == sdl2.SDL_KEYDOWN:
-                if event.key.keysym.sym == sdl2.SDLK_LCTRL or event.key.keysym.sym == sdl2.SDLK_RCTRL:
-                    self.ctrl = 1
                 if event.key.keysym.sym == sdl2.SDLK_c:
-                    if self.ctrl == 1:
+                    if event.key.keysym.mod & sdl2.KMOD_CTRL:
                         key_event['type'] = self.exit_event_type
                         key_event['value'] = 'quit'
-                if event.key.keysym.sym == sdl2.SDLK_ESCAPE:
+                elif event.key.keysym.sym == sdl2.SDLK_ESCAPE:
                     key_event['type'] = self.exit_event_type
                     key_event['value'] = 'quit'
                 elif event.key.keysym.sym in self.key_map:
-                    key_event['type'] = pinproc.EventTypeSwitchClosedDebounced
-                    key_event['value'] = self.key_map[event.key.keysym.sym]
-                    key_event['time'] = clock() * 1000
+                    for mods,switch_number in self.key_map[event.key.keysym.sym]:
+                        keysym_mod = event.key.keysym.mod
+                        if mods == 0 and keysym_mod & 0x3FF == 0 or \
+                           mods != 0 and keysym_mod & mods == mods:
+                            key_event['type'] = pinproc.EventTypeSwitchClosedDebounced
+                            key_event['value'] = switch_number
+                            key_event['time'] = clock() * 1000
+                            break
             elif event.type == sdl2.SDL_KEYUP:
-                if event.key.keysym.sym == sdl2.SDLK_LCTRL or event.key.keysym.sym == sdl2.SDLK_RCTRL:
-                    self.ctrl = 0
-                elif event.key.keysym.sym in self.key_map:
-                    key_event['type'] = pinproc.EventTypeSwitchOpenDebounced
-                    key_event['value'] = self.key_map[event.key.keysym.sym]
-                    key_event['time'] = clock() * 1000
+                if event.key.keysym.sym in self.key_map:
+                    for mods,switch_number in self.key_map[event.key.keysym.sym]:
+                        if event.key.keysym.mod & mods == mods:
+                            key_event['type'] = pinproc.EventTypeSwitchOpenDebounced
+                            key_event['value'] = switch_number
+                            key_event['time'] = clock() * 1000
+                            break
             if len(key_event):
                 self.key_events.append(key_event)
         e = self.key_events
