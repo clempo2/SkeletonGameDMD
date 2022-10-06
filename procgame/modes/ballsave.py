@@ -140,12 +140,6 @@ class BallSave(Mode):
         """Returns the number of balls that can be saved.  Typically this is linked to a Trough object so the trough can decide if a a draining ball should be saved."""
         return self.num_balls_to_save
 
-    def saving_ball(self):
-        if not self.allow_multiple_saves:
-            self.timer = 1
-            if(self.lamp is not None):
-                self.lamp.disable()
-
     def delayed_start_handler(self, sw):
         if self.mode_begin:
             self.timer = self.timer_hold

@@ -317,12 +317,12 @@ class SkeletonGame(BasicGame):
             # Only once the ball is fed to the shooter lane is it possible for the ball
             # drain to actually end a ball
             self.trough.drain_callback = None
-            self.trough.launch_callback = None
             self.trough.launched_callback = self.__install_drain_logic
 
             # Link ball_save to trough
             self.trough.ball_save_callback = self.ball_save.launch_callback
             self.trough.num_balls_to_save = self.ball_save.get_num_balls_to_save
+            self.trough.allow_multiple_saves = lambda: self.ball_save.allow_multiple_saves
             self.ball_save.trough_enable_ball_save = self.trough.enable_ball_save
 
             self.game_start_pending = False
@@ -398,7 +398,6 @@ class SkeletonGame(BasicGame):
             successfully fed the ball into the shooter lane """
         self.logger.debug("drain logic installed to trough")
         self.trough.drain_callback = self.__ball_drained_callback
-        self.trough.launch_callback = None
         self.trough.launched_callback = None
 
     def cleanup(self):
@@ -764,7 +763,6 @@ class SkeletonGame(BasicGame):
         # Only once the ball is fed to the shooter lane is it possible for the ball
         # drain to actually end a ball
         self.trough.drain_callback = None
-        self.trough.launch_callback = None
         self.trough.launched_callback = self.__install_drain_logic
 
         # Link ball_save to trough
@@ -992,7 +990,6 @@ class SkeletonGame(BasicGame):
 
             # Remove ball drained logic until the ball is fed into the shooter lane again
             self.trough.drain_callback = None
-            self.trough.launch_callback = None
             self.trough.launched_callback = self.__install_drain_logic
 
             if(self.use_ballsearch_mode):
@@ -1080,10 +1077,8 @@ class SkeletonGame(BasicGame):
 
         if(self.trough.drain_callback == None):
             self.logger.debug("machine tilted before drain logic installed; install it now!")
-            self.trough.num_balls_to_launch = 0
             self.trough.drain_callback = self.__ball_drained_callback
             # TODO: check if the trough is full in a few seconds
-
 
         self.notifyModes('evt_tilt', args=False, event_complete_fn=None)
 
