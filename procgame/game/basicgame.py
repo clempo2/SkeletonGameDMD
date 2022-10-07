@@ -27,9 +27,9 @@ class BasicGame(GameController):
 	"""
 	
 	dmd = None
-        alpha_display = None
+	alpha_display = None
 	score_display = None
-        aux_port = None
+	aux_port = None
 	desktop = None
 	
 	def __init__(self, machine_type):
@@ -57,7 +57,7 @@ class BasicGame(GameController):
 
 	def load_config(self, path):
 		super(BasicGame,self).load_config(path)
-		
+
 		# Setup the key mappings from the config.yaml.
 		# We used to do this in __init__, but at that time the
 		# configuration isn't loaded so we can't peek into self.switches.
@@ -69,20 +69,40 @@ class BasicGame(GameController):
 					switch_number = self.switches[switch_name].number
 				else:
 					switch_number = pinproc.decode(self.machine_type, switch_name)
-				mods = 0
 				if type(k) == str:
 					if len(k) == 1:
 						# key is character
 						key = ord(k)
+						self.desktop.add_key_map(key, switch_number)
 					else:
 						# MOD1+MOD2+...+KEY  where MODn is a modifier name and KEY is a keycode name
 						# for example LSHIFT+TAB which means KMOD_LSHIFT modifier with SDLK_TAB key
+						# and ALT+SHIFT+a means left or right ALT together with left or right SHIFT together with a
 						ks = k.split('+')
-						mods = sum([getattr(sdl2.keycode, 'KMOD_' + m) for m in ks[:-1]])
+						if k.endswith('++'):
+							# support modifiers with the plus key
+							ks = ks[:-2] + ['+']
 						if len(ks[-1]) == 1:
 							key = ord(ks[-1])
 						else:
 							key = getattr(sdl2.keycode, 'SDLK_' + ks[-1])
+						mods = [0]
+						for mod_name in ks[:-1]:
+							# each bit in mod duplicates the whole mods list
+							# for example LCRTL is only one bit so it expands to [KMOD_LCTRL]
+							# CRTL has two bits so it expands to [KMOD_LCTRL,KMOD_RCTRL]
+							# ALT+CTRL has two modifiers each with two bits,
+							#   first it expands to [KMOD_LALT,KMOD_RALT]
+							#   then to [KMOD_LALT|KMOD_LCTRL, KMOD_LALT|LKMOD_RCTRL, KMOD_RALT|KMOD_LCTRL, KMOD_RALT|LKMOD_RCTRL]
+							mod = getattr(sdl2.keycode, 'KMOD_' + mod_name)
+							tmp_mods = []
+							while mod:
+								least_bit = mod - (mod & (mod - 1))
+								tmp_mods += [m | least_bit for m in mods]
+								mod -= least_bit
+							mods = tmp_mods
+						for m in mods:
+							self.desktop.add_key_map(key, switch_number, m)
 				elif type(k) == int:
 					if k < 10:
 						# digit character
@@ -91,9 +111,9 @@ class BasicGame(GameController):
 						# integer keycode, i.e. the value of sdl2.keycode.SDLK_xxxx
 						# for example SDLK_LSHIFT is 1073742049
 						key = k
+						self.desktop.add_key_map(key, switch_number)
 				else:
 					raise ValueError('invalid key name in config file: ' + str(k))
-				self.desktop.add_key_map(key, switch_number, mods)
 
 	def reset(self):
 		"""Calls super's reset and adds the :class:`ScoreDisplay` mode to the mode queue."""
