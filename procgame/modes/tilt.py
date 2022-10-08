@@ -12,7 +12,7 @@ class Tilted(AdvancedMode):
         super(Tilted, self).__init__(game, priority=99999, mode_type=AdvancedMode.Manual)
         always_seen_switches = self.game.switches.items_tagged('tilt_visible')
         always_seen_switches.append(self.game.switches.items_tagged('trough'))
-        for sw in [x for x in self.game.switches if x.name not in self.game.trough.position_switchnames and x.name not in always_seen_switches]:
+        for sw in [x for x in self.game.switches if x.name not in self.game.trough.position_switchnames and x not in always_seen_switches]:
             self.add_switch_handler(name=sw.name, event_type='active', delay=None, handler=self.ignore_switch)
 
     def ignore_switch(self, sw):
