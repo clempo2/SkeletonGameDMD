@@ -410,9 +410,11 @@ class Trough(Mode):
 
     def ball_eject_error(self):
         if self.eject_in_progress == True:
+            # make extra sure there is no ball in shooter lane before we retry the launch
+            if self.game.switches[self.shooter_lane_switchname].is_inactive(self.inactive_shooter_time):
+                self.logger.info("ball eject error watch elapsed, ejecting the ball again")
+                self.game.coils[self.eject_coilname].pulse()
             self.delay(name='ejectErrorWatch', delay=4, handler=self.ball_eject_error)
-            self.logger.info("ball eject error watch elapsed, ejecting the ball again")
-            self.game.coils[self.eject_coilname].pulse()
 
 class LaunchRequest(object):
     """A data object that remembers the details of a single call to launch_balls"""
