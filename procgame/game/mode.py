@@ -180,14 +180,23 @@ class Mode(object):
             name = 'anon_delay'+str(uuid.uuid1())
         self.__delayed.append(Mode.Delayed(name=name, time=time.time()+delay, handler=handler, event_type=event_type, param=param))
         try:
-            self.__delayed.sort(lambda x, y: int((x.time - y.time)*100)) # this must be a stable sort
+            self.__delayed.sort(self.cmp_time) # this must be a stable sort
         except TypeError, ex:
             # Debugging code:
             for x in self.__delayed:
                 print(x)
             raise ex
         return name
-    
+
+    def cmp_time(self, x, y):
+        delta = x.time - y.time
+        if delta < 0.0:
+            return -1
+        elif delta == 0.0:
+            return 0
+        else:
+            return 1
+
     def cancel_delayed(self, name):
         """Removes the given named delays from the delayed list, cancelling their execution."""
         names = name if type(name) == list else [name]
