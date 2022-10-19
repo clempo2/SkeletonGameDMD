@@ -165,7 +165,7 @@ class sdl2_DisplayManager(object):
 
     def close(self):
         try:
-            # This is uglier than necessary because our version of PySDL2 is old and missing some methods
+            # Our version of PySDL2 is old and missing some methods
             # Equivalent to self.renderer.destroy()
             SDL_DestroyRenderer(self.texture_renderer.sdlrenderer)
             self.texture_renderer.sdlrenderer = None
