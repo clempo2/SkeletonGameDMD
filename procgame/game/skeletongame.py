@@ -406,6 +406,8 @@ class SkeletonGame(BasicGame):
 
     def end_run_loop(self):
         if(not self.cleaned_up): # if the game hasn't crashed, this might be called twice
+            if sdl2_DisplayManager.inst():
+                sdl2_DisplayManager.inst().close()
             cleanup()
             if(hasattr(self,'cleanup')):
                 self.logger.info("calling cleanup")

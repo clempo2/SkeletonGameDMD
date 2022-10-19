@@ -21,7 +21,7 @@ except Exception, e:
 
 from sdl2.ext.draw import prepare_color
 from sdl2.ext.color import convert_to_color
-from sdl2 import SDL_Init, SDL_INIT_VIDEO
+from sdl2 import SDL_DestroyRenderer, SDL_DestroyWindow, SDL_Init, SDL_Quit, SDL_INIT_VIDEO
 
 _HASSDLIMAGE = True
 try:
@@ -162,6 +162,19 @@ class sdl2_DisplayManager(object):
             self.window.show()
         else:
             self.window.hide()
+
+    def close(self):
+        try:
+            # This is uglier than necessary because our version of PySDL2 is old and missing some methods
+            # Equivalent to self.renderer.destroy()
+            SDL_DestroyRenderer(self.texture_renderer.sdlrenderer)
+            self.texture_renderer.sdlrenderer = None
+            self.texture_renderer.rendertarget = None
+            # Equivalent to self.window.close()
+            SDL_DestroyWindow(self.window.window)
+            self.window.window = None
+        except:
+            pass
 
     def fonts_init(self, default_font_path, default_font_alias, size=30, color=(0,0,128,255), bgcolor=(0,0,0)):
         from pygame.font import match_font
