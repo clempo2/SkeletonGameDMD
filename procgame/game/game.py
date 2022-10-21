@@ -688,7 +688,6 @@ class GameController(object):
 
     # MJO: added to support virtual DMD only (i.e., without hardware)
     last_dmd_event = 0.0
-    frames_per_second = 30
     rem_frames = 0.0
     def get_virtualDMDevents(self):
         """ Get all switch and DMD events since the last time this was called. """

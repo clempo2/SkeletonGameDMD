@@ -634,8 +634,6 @@ class sdl2_DisplayManager(object):
         # del tsurface
 
         # the pixel buffer must not be freed for the lifetime of the surface
-        imgsurface._pxbuf = bits
-
         tx = self.texture_from_surface(imgsurface)
 
         del imgsurface

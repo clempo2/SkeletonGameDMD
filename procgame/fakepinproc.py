@@ -24,7 +24,7 @@ class FakePinPROC(object):
         # this short circuits the generation of 'extra' DMD events if the virtual/color DMD is used
         use_proc_dmd = config.value_for_key_path(keypath='proc_dmd', default=False)
         if use_proc_dmd:
-            self.frames_per_second = config.value_for_key_path('dmd_framerate', 30)
+            self.frames_per_second = config.value_for_key_path('dmd_framerate', 60)
         else:
             self.get_events = self.get_events_noDMD
 

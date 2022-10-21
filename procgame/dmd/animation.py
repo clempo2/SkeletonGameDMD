@@ -126,6 +126,7 @@ class Animation(object):
     """Height of each of the animation frames in dots."""
     frames = []
     """Ordered collection of :class:`~procgame.dmd.Frame` objects."""
+    font_loader = False
 
     def __init__(self):
         """Initializes the animation."""
@@ -380,6 +381,10 @@ class Animation(object):
             new_frame = Frame(self.width, self.height)
             if(dmd_style==0):
                 str_frame = f.read(self.width * self.height)
+                if self.font_loader and frame_index == 0:
+                    # restrict raster font pixels to greyscale like on the P-ROC DMD
+                    list_frame = [chr(ord(x) & 0xF) for x in str_frame]
+                    str_frame = ''.join(list_frame)
                 new_frame.build_surface_from_8bit_dmd_string(str_frame, composite_op)
             elif(dmd_style==1):
                 str_frame = f.read(self.width * self.height * 3)

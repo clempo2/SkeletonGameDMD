@@ -36,6 +36,7 @@ class Font(object):
     def __init__(self, filename=None, char_widths=None):
         super(Font, self).__init__()
         self.__anim = Animation()
+        self.__anim.font_loader = True
         self.char_size = None
         self.bitmap = None
         if filename != None:
