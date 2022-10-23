@@ -97,6 +97,7 @@ class AssetManager(object):
         self.single_line = self.value_for_key_path('UserInterface.single_line', False)
         default_line_format = "Loading %s: [%06d] of [%06d]: %s" if self.single_line else "Loading %s: [%06d] of [%06d]"
         self.line_format = self.value_for_key_path('UserInterface.line_format', default_line_format)
+        self.line_format2 = self.value_for_key_path('UserInterface.line_format2', "%s")
         self.border_width = self.value_for_key_path('UserInterface.progress_bar.border_width', 1)
         self.border_color = self.verify_alpha(self.value_for_key_path('UserInterface.progress_bar.border', (120,120,120,255)))
         self.background_color = self.verify_alpha(self.value_for_key_path('UserInterface.progress_bar.background', None))
@@ -159,14 +160,19 @@ class AssetManager(object):
 
         sdl2_DisplayManager.inst().draw_rect(self.fill_color, (self.prog_bar_x + self.border_width, self.prog_bar_y + self.border_width, bar_width, self.prog_bar_height - 2 * self.border_width), True)
 
+        dict_values = {"type": displayType, "num": self.numLoaded+1, "total": self.total, "filename": fname}
         if (self.single_line):
-            s = self.line_format % (displayType, self.numLoaded+1,self.total, fname)
+            values = dict_values if "%(" in self.line_format else (displayType, self.numLoaded+1, self.total, fname)
+            s = self.line_format % values
             self.render_text(s, x=self.text_x, y=self.text_y)
         else:
-            s = self.line_format % (displayType, self.numLoaded+1,self.total)
+            values = dict_values if "%(" in self.line_format else (displayType, self.numLoaded+1, self.total)
+            s = self.line_format % values
             tx_size = self.render_text(s, x=self.text_x, y=self.text_y)
             (unused_tx_w, tx_h) = tx_size
-            self.render_text(fname, x=self.text_x, y=int(self.text_y+1.2*tx_h))
+            values = dict_values if "%(" in self.line_format else (fname)
+            s = self.line_format2 % values
+            self.render_text(s, x=self.text_x, y=int(self.text_y+1.2*tx_h))
 
         sdl2_DisplayManager.inst().switch_target(bk)
         if self.game.use_proc_dmd:
