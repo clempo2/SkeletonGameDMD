@@ -132,5 +132,25 @@ Store the number of remaining tilt warnings in the player state as warnings_rema
 
 Add method SoundController.stop_all(self)
 
+Remove SDL2 errors when quitting by destroying the renderer and closing the window
 
+When loading raster fonts in the dmd format version 0 (8-bit per pixel), ignore most-significant 4 bits in pixel values.
+This is for compatibility with pyprocgame. This will produce a font in greyscale.
 
+Set the default dmd_framerate to 60 in FakePinPROC when using the P-ROC DMD, otherwise the default remains 30.
+This is necessary to match the animation speed of the real P-ROC.
+
+Change the dmd_framerate to 60 in EmptyGameDMD/config.yaml to match the frame rate of the real P-ROC
+
+It is now possible to format the text in the asset manager progress bar display using dictionary keys.
+If the format string contains %( the asset manager calls the string % operator with a dictionary instead of a tuple.
+The available dictionary keys are:
+  type: the asset type
+  num: the asset number
+  total: the total number of assets
+  filename: the filepath of the asset
+For example, you can specify
+  line_format: '%(type)s %(num)03d OF %(total)03d'
+If single_line is False, the second line can now be formatted with the new line_format2 property. The default is "%s".
+For example, you can specify
+  line_format2: '%(filename)s'
