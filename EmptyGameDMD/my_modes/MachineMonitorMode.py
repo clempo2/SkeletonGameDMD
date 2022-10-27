@@ -27,10 +27,10 @@ class MachineMonitorMode(procgame.game.AdvancedMode):
 
         if(slam_tilt):
             self.game.sound.play('slam_tilt')
-            self.game.tilted_mode.layer = self.game.generateLayer('SLAM TILT')
+            self.game.tilted_mode.layer = self.game.generateLayer('SLAM TILT', opaque=True)
         else:
             self.game.sound.play('tilt')
-            self.game.tilted_mode.layer = self.game.generateLayer('TILT!!')
+            self.game.tilted_mode.layer = self.game.generateLayer('TILT!!', opaque=True)
 
     def evt_tilt_warning(self, times):
         self.game.sound.stop('tilt warning')
