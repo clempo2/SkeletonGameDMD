@@ -55,11 +55,9 @@ class BallSearch(Mode):
 
 	def reset(self,sw):
 		if self.enabled:
-			# Stop delayed coil activations in case a ball search has
-			# already started.
-			self.cancel_delayed('ball_search_coil1')
-			self.cancel_delayed('start_special_handler_modes')
-			schedule_search = 1
+			# Stop in case a ball search has already started
+			self.cancel_delayed(['ball_search_countdown', 'ball_search_coil1', 'start_special_handler_modes'])
+			schedule_search = True
 			for sw_state_fn in self.stop_switch_check_functions:
 
 				# Don't restart the search countdown if a ball
@@ -67,20 +65,18 @@ class BallSearch(Mode):
 				# build the appropriate function call into
 				# the switch, and then call it using getattr()
 				if sw_state_fn():
-					schedule_search = 0
+					schedule_search = False
 					break
 
 			if schedule_search:
-				self.cancel_delayed(name='ball_search_countdown');
 				self.delay(name='ball_search_countdown', event_type=None, delay=self.countdown_time, handler=self.perform_search, param=0)
 				self.logger.debug("RESET via '%s'; will search in %ds." % (sw, self.countdown_time))
 			else:
 				self.logger.debug("RESET (requested); next search is not scheduled due to current switch states.")
 
 	def stop(self,sw):
-		self.logger.debug("countdown STOPPED via '%s'" % ("" if sw is None else sw))
-		self.cancel_delayed('ball_search_countdown');
-		self.cancel_delayed('ball_search_coil1');
+		self.logger.debug("countdown STOPPED via '%s'" % sw)
+		self.cancel_delayed(['ball_search_countdown', 'ball_search_coil1', 'start_special_handler_modes'])
 
 	def full_stop(self):
 		# for backwards compatibility, now same as stop()
