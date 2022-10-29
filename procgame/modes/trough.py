@@ -235,8 +235,7 @@ class Trough(Mode):
                 if curr_trough_count == num_installed_balls or \
                    curr_trough_count == num_trough_balls_if_ball_ending:
                     self.num_balls_in_play -= 1
-                    if self.drain_callback:
-                        self.drain_callback()
+                    self.call_drain_callback()
 
                     # it's possible that multiple balls have
                     # drained since the last time we checked (due to
@@ -256,8 +255,8 @@ class Trough(Mode):
                 elif curr_trough_count == \
                      num_trough_balls_if_multiball_ending:
                     self.num_balls_in_play = 1
-                    if self.drain_callback:
-                        self.drain_callback()
+                    self.call_drain_callback()
+
                 # Otherwise, another ball from multiball is draining
                 # if the trough gets one more than it would have if
                 # all num_balls_in_play are not in the trough.
@@ -269,8 +268,7 @@ class Trough(Mode):
                     # otherwise subtract 1
                     else:
                         self.num_balls_in_play -= 1
-                    if self.drain_callback:
-                        self.drain_callback()
+                    self.call_drain_callback()
                 else:
                     # a ball has drained _but_ this isn't the end of ball
                     # or the last multiball.  by checking to make sure that
@@ -278,12 +276,16 @@ class Trough(Mode):
                     # messages from someone pulling balls out of the trough
                     # or too many balls installed in the machine
                     if(self.num_balls_in_play > 1):
-                        self.drain_callback()
+                        self.call_drain_callback()
         else: # there are no balls in play...
             if(self.is_full() and self.game.game_start_pending):
                 self.game.your_search_is_over()
             elif(self.game.game_tilted):
-                self.drain_callback()
+                self.call_drain_callback()
+
+    def call_drain_callback(self):
+        if self.drain_callback:
+            self.drain_callback()
 
     # Count the number of balls in the trough by counting active trough switches.
     def num_balls(self):
