@@ -265,7 +265,7 @@ class Mode(object):
         """
         for child in self.__children:
             self.game.modes.add(child)
-        
+
     def mode_stopped(self):
         """Notifies the mode that it has been removed from the mode queue.
         
@@ -292,12 +292,16 @@ class Mode(object):
         #   removing a mode clears its __delayed list in place to abort the dispatch_delayed for loop early
         #   cancelling a delay must assign a new list to __delayed (never remove individual delays in place, that breaks the dispatch_delayed iteration)
         #   cancelling a delay adds its name to __cancelled_delayed 
-        #   new delays can be appended in place with time > t (no negative delays)
+        #   new delays can be appended in place with time >= t (no negative delays)
         #   sorting delays uses a stable sort
         self.__cancelled_delayed = [] # blacklist of delays cancelled during this dispatch_delayed
         t = time.time()
 
-        for item in self.__delayed:
+        items = filter(lambda x: x.time <= t, self.__delayed)
+        # removing the ready items now allows the creation of new delayed handlers with delay=0 thus possibly same time t
+        self.__delayed = filter(lambda x: x.time > t, self.__delayed)
+
+        for item in items:
             if item.time <= t:
                 if item.name not in self.__cancelled_delayed:
                     handler = item.handler
@@ -307,7 +311,6 @@ class Mode(object):
                         handler()
             else:
                 break
-        self.__delayed = filter(lambda x: x.time > t, self.__delayed)
 
     def is_started(self):
         """Returns ``True`` if this mode is on the mode queue (:meth:`mode_started` has already been called)."""
