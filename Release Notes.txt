@@ -112,7 +112,7 @@ Suppress the evt_mb_drain event when the game is tilted
 
 Add the game, font_plain and font_bold parameters to generate_highscore_frames(categories, game, font_plain, font_bold, width=128, height=32) to pass those parameters to dmd.MarkupFrameGenerator()
 
-BallSearch.stop() now cancels the delayed handlers. This makes stop() the same as BallSearch.full_stop(). The method full_stop() is kept only for backwards compatibility.
+BallSearch now stops all delayed handlers upon reset or stop. This makes stop() the same as BallSearch.full_stop(). The method full_stop() is kept only for backwards compatibility.
 
 Add support for vertical justification with raster fonts in DMDHelper.generateTextLayerFromYaml()
 
@@ -154,3 +154,7 @@ For example, you can specify
 If single_line is False, the second line can now be formatted with the new line_format2 property. The default is "%s".
 For example, you can specify
   line_format2: '%(filename)s'
+
+Check if there is a drain_callback before calling it in Trough class
+
+Fix execution of delayed handlers registered with no delay (delay=0). Depending on the time resolution, they were sometimes filtered out at the end of dispatch_delayed and never executed.
