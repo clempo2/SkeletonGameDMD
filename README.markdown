@@ -21,6 +21,9 @@ To enable the display on the DMD driven by the P-ROC controller, set the followi
 See ./EmptyGameDMD for an example of very simple game using a physical monochrome DMD driven by the P-ROC controller, from which to start a new game.
 In particular, EmptyGameDMD shows how to configure the lower resolution ScoreDisplay and a very simple attract mode formatted for the size of the DMD.
 
+## Known Issues
+
+When the screen saver activates, the DMD display goes blank and the game can become unstable. To avoid this problem, the screen saver must be disabled when running SkeletonGameDMD with the display on the DMD enabled. 
 
 ## License
 
