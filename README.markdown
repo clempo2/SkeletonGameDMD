@@ -23,7 +23,16 @@ In particular, EmptyGameDMD shows how to configure the lower resolution ScoreDis
 
 ## Known Issues
 
-When the screen saver activates, the DMD display goes blank and the game can become unstable. To avoid this problem, the screen saver must be disabled when running SkeletonGameDMD with the display on the DMD enabled. 
+When the display on the DMD is enabled, the screen saver must be turned off, otherwise when the screen saver activates the DMD display goes blank and the game can become unstable.  
+You can turn off the screen saver in the Windows settings, or you can add this code in your game before calling run_proc_game()
+
+    ```
+    import platform
+    import ctypes
+    if platform.system() == 'Windows':
+        # Turn off the screen saver on Windows.
+        ctypes.windll.kernel32.SetThreadExecutionState(0x80000002)
+    ```
 
 ## License
 
