@@ -12,11 +12,11 @@ Please see the [Official PyProcGameHD/SkeletonGame website](http://skeletongame.
 
 To enable the display on the DMD driven by the P-ROC controller, set the following options in config.yaml
 
-    ```
-    proc_dmd: True
-    dmd_dots_w: 128
-    dmd_dots_h: 32
-    ```
+```
+proc_dmd: True  
+dmd_dots_w: 128  
+dmd_dots_h: 32  
+```
 
 See ./EmptyGameDMD for an example of very simple game using a physical monochrome DMD driven by the P-ROC controller, from which to start a new game.
 In particular, EmptyGameDMD shows how to configure the lower resolution ScoreDisplay and a very simple attract mode formatted for the size of the DMD.
@@ -26,13 +26,13 @@ In particular, EmptyGameDMD shows how to configure the lower resolution ScoreDis
 When the display on the DMD is enabled, the screen saver must be turned off, otherwise when the screen saver activates the DMD display goes blank and the game can become unstable.  
 You can turn off the screen saver in the Windows settings, or you can add this code in your game before calling run_proc_game()
 
-    ```
-    import platform
-    import ctypes
-    if platform.system() == 'Windows':
-        # Turn off the screen saver on Windows.
-        ctypes.windll.kernel32.SetThreadExecutionState(0x80000002)
-    ```
+```
+import platform  
+import ctypes  
+if platform.system() == 'Windows':  
+    # Turn off the screen saver on Windows.  
+    ctypes.windll.kernel32.SetThreadExecutionState(0x80000002)  
+```
 
 ## License
 
