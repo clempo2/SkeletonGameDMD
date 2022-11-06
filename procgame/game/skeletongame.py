@@ -774,27 +774,36 @@ class SkeletonGame(BasicGame):
 
         self.modes.add(self.ball_save)
 
-        if(self.use_stock_scoredisplay is not False):
+        if self.use_stock_scoredisplay is not False:
             self.score_display.reset()
             self.modes.add(self.score_display)
 
-        if(self.use_osc_input):
+        if self.use_osc_input:
             self.modes.modes.append(self.osc)
 
         self.modes.add(self.dmdHelper)
         self.modes.add(self.switchmonitor)
 
         self.modes.add(self.ball_search)
-        if(self.use_ballsearch_mode):
+        if self.use_ballsearch_mode:
             self.ball_search.disable()
 
         # try to set the game up to be in a clean state from the outset
-        if(self.trough.num_balls() < self.num_balls_total):
+        if self.is_missing_balls():
             self.logger.info("Skel: RESET: trough isn't full [%d of %d] -- requesting search" % (self.trough.num_balls(), self.num_balls_total))
-            # let the pending ballsearch reset and stop switch events be delivered first
-            # we don't want a stop switch stopping the search the just initiated
-            # this is more an issue when the machine has just been powered up  
+            # Let the pending reset and stop switch events be delivered to the ballsearch first.
+            # We don't want a stop switch stopping the search just initiated.
+            # This is more an issue when the machine has just been powered up.  
             self.switchmonitor.delay('perform_search', event_type=None, delay=0.5, handler=self.__perform_search)
+
+    def is_missing_balls(self):
+        """ Return whether balls are missing from the trough when the game starts.
+            If balls are missing, the game will not start immediately and a ball search will be performed.
+            This method can be overridden in subclasses to let the game start even though the trough is not full.
+            For example, the subclass can return false when it knows the missing balls are in physical
+            locks and the game handles that case gracefully.
+        """
+        return self.trough.num_balls() < self.num_balls_total;
 
     def __perform_search(self):
             if (self.use_ballsearch_mode):
@@ -1140,15 +1149,15 @@ class SkeletonGame(BasicGame):
             self.modes.remove(m())
 
     def reset_search(self):
-        if(self.game_start_pending):
+        if self.game_start_pending:
             # self.clear_status()
             self.game_start_pending = False
-            if(self.trough.num_balls() >= self.num_balls_total):
+            #if not self.is_missing_balls():
                 # we could start now...
                 # but don't!
                 # self.game_started()
-                pass
-            else: # insufficient balls to start
+                #pass
+            #else: # insufficient balls to start
                 # don't try again, just shut down the status indicator
 
                 # # wait 3s before trying again
@@ -1161,23 +1170,23 @@ class SkeletonGame(BasicGame):
                 # else:
                 #     self.do_ball_search(silent=False)
                 #     self.ball_search.delay(name='ballsearch_start_delay', event_type=None, delay=3.0, handler=self.reset_search)
-                pass
-        else:
+                #pass
+        #else:
             # game started on it's own.  Continue living
-            pass
+            #pass
 
     def game_started(self):
         """ this happens after start_game but before start_ball/ball_starting"""
         self.logger.info("Skel:Game START Requested...(check trough first)")
 
         # check trough and potentially do a ball search first
-        if(self.game_start_pending and (self.trough.num_balls() < self.num_balls_total)):
+        if self.game_start_pending and self.is_missing_balls():
             self.logger.info("Skel: Game START : PLEASE WAIT!! -- TROUGH STATE is still BLOCKING GAME START!")
             # self.set_status("Balls STILL Missing: PLEASE WAIT!!", 3.0)
             self.notifyModes('evt_balls_missing', args=None, event_complete_fn=None)
             return
 
-        if(self.trough.num_balls() < self.num_balls_total):
+        if self.is_missing_balls():
             self.game_start_pending=True
             self.logger.info("Skel: game_started: trough isn't full [%d of %d] -- requesting search" % (self.trough.num_balls(), self.num_balls_total))
             if(self.use_ballsearch_mode):

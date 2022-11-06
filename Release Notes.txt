@@ -1,69 +1,53 @@
 SkeletonGameDMD release notes
 
-This document lists changes between the official SkeletonGame and SkeletonGameDMD.
+This document lists changes between SkeletonGame and SkeletonGameDMD.
 
-Fixed the keyboard mapping left/right shift to left/right flipper in EmptyGame's config.yaml
+New features:
 
-Added EmptyGameDMD, a port of EmptyGame demonstrating DMD support
+- Add the new config.yaml settings proc_dmd, set to True to enable support for
+  monochrome DMD. Remove the broken config.yaml settings use_virtual_dmd_only
 
-Improved sample yaml file for Judge Dredd machine (JD.yaml)
+- Added EmptyGameDMD, a port of EmptyGame demonstrating DMD support
 
-Export service module in procgame __init__.py
-
-Base the asset manager display layout on the dots size instead of window size
-Display the progress on the DMD when the DMD is enabled
-New YAML properties controlling the asset manager display layout:
-   UserInterface.line_format
-	default for single line is "Loading %s: [%06d] of [%06d]: %s"
+- Base the asset manager display layout on the dots size instead of window size
+  Display the progress on the DMD when the DMD is enabled
+  New YAML properties controlling the asset manager display layout:
+    UserInterface.line_format
+      default for single line is "Loading %s: [%06d] of [%06d]: %s"
         default for multiple lines is "Loading %s: [%06d] of [%06d]"
-   UserInterface.progress_bar.border_width
-	default is 1
-   UserInterface.progress_bar.background
-	default is None
-The default alpha is 255 when an RGBA color is given as RGB, e.g. (120,120,120) means (120,120,120,255)
-Add the number of rgbshows in the total count of assets
-Do not count font styles in the total number of assets
+    UserInterface.progress_bar.border_width
+      default is 1
+    UserInterface.progress_bar.background
+      default is None
+  The default alpha is 255 when an RGBA color is given as RGB,
+  e.g. (120,120,120) means (120,120,120,255)
+  
+- Support key modifiers in keyboard mapping. The syntax is MOD1+...+MODN+key
+  Where MODx is one of the KMOD_xxx constants from sdl2.keycode module
+  without the KMOD_ prefix, and key is a single character or one of the SDLK_xxx
+  constants from sdl2.keycode module without the SDLK_ prefix.
 
-Search for the config file in ./config/config.yaml first, if not found continue searching like before in ./config.yaml then ~/.pyprocgame/config.yaml
+  All the modifiers specified must be pressed at the same time as the key.
+  For example LCTRL+LSHIFT+z means left control and left shift and z together.
+  Other modifier keys pressed at the same time do not affect the mapping.
 
-Support key modifiers in keyboard mapping. The syntax is MOD1+...+MODN+key
-Where MODx is one of the KMOD_xxx constants from sdl2.keycode module without the KMOD_ prefix, and key is a single character or one of the SDLK_xxx constants from sdl2.keycode module without the SDLK_ prefix.
-All the modifiers specified must be pressed at the same time as the key. For example LCTRL+LSHIFT+z means left control and left shift and z at the same time. Other modifiers keys can be pressed at the same time without affecting the mapping.
-Some modifier names represent two alternative keys, in that case one or the other or both alternatives must be pressed at the same time as the key, for example CTRL+z means left control and z together or right control and z together, or both left and right control and z together.
-Multiple modifier names each representing two alternative keys multiply the possibilities. For example: CTRL+SHIFT+z represents 4 mappings: LCTRL+LSHIFT+z, LCTRL+RSHIFT+z, RCTRL+LSHIFT+z and RCTRL+RSHIFT+z
-To combine modifiers with the + key, use the syntax MOD1+...+MODN++
-Support keyboard mappings with the letter c, except the mapping CTRL+c is built-in and cannot be modified.
-Keyboard mappings with the ESC key are not supported
+  Some modifier names represent two alternative keys, in that case one or
+  the other or both alternatives must be pressed at the same time as the key,
+  for example CTRL+z means left control and z together or right control
+  and z together, or both left and right control and z together.
 
-Added method Font.drawHD(self, frame, text, x, y, line_color, line_width, interior_color, fill_color, font_size=None) to simplify compatibility between raster fonts and HD fonts. Style parameters are ignored, this is the same as draw(frame, text, x, y).
+  Multiple modifier names each representing two alternative keys multiply
+  the possibilities. For example: CTRL+SHIFT+z represents 4 mappings:
+  LCTRL+LSHIFT+z, LCTRL+RSHIFT+z, RCTRL+LSHIFT+z and RCTRL+RSHIFT+z
 
-TextLayer.set_text(self, text, seconds=None, blink_frames=None) sets self.text_width and self.text_height like HDTextLayer
+  To combine modifiers with the + key, use the syntax MOD1+...+MODN++
 
-Fix ScriptedLayer.reset(self) to reset the transition state too
+- Support keyboard mappings with the letter c,
+  except the mapping CTRL+c is built-in and cannot be modified.
+  Keyboard mappings with the ESC key are not supported
 
-Fix sdl2_DisplayManager.make_bits_from_texture(self, texture, width, height, mode="RGBA") implementation to read the texture pixels from the texture renderer.
-
-Remove the broken config.yaml settings use_virtual_dmd_only
-Add the new config.yaml settings proc_dmd, set to True to enable support for monochrome DMD
-
-Service mode now respects the order of settings in game_user_settings.yaml for its menus
-
-New internal method ModeQueue.reset(self) to clear all modes in the queue
-
-Fix the run loop to avoid calling a delayed handler when the mode is removed within the same tick cycle
-
-Fix the run loop to avoid calling mode_tick() when the mode is removed in that tick cycle
-
-Throw if a delayed handler is registered with a negative delay
-
-Accept a list of modes in self.game.modes.add() and self.game.modes.remove()
-
-Improve performance of Mode.is_started()
-
-Removing a mode clears its delayed handlers
-
-Make the names of the settings sections configurable in the service menu.
-The default mappings are
+- Make the names of the settings sections configurable in the service menu.
+  The default mappings are
     settings_sections = {
         'Machine': 'Machine (Standard)',
         'Coils': 'Machine (Coils)',
@@ -71,13 +55,16 @@ The default mappings are
         'Gameplay': 'Gameplay (Feature)',
         'Replay': 'Replay'
     }
-This maps the internal section name to the section display name.
-To rename a section, define this attribute at the top of your SkeletonGame subclass
-For example:
-class JD2Game(SkeletonGame):
+
+  This maps the internal section name to the section display name.
+  To rename a section, define this attribute at the top of your
+  SkeletonGame subclass. For example:
+
+  class JD2Game(SkeletonGame):
     """Judge Dredd pinball game"""
 
-    # rename the settings sections used by the framework back to simpler section names
+    # rename the settings sections used by the framework back to
+    # simpler section names
     settings_sections = {
         'Machine': 'Machine',
         'Coils': 'Coil Strength',
@@ -86,75 +73,168 @@ class JD2Game(SkeletonGame):
         'Replay': 'Replay'
     }
 
-Show the connection failure message and the USB hints only if the screen is wider than 128.
-That message is too long for DMD.
+- Search for the config file in ./config/config.yaml first,
+  if not found continue searching like before in ./config.yaml
+  then ~/.pyprocgame/config.yaml
 
-Remember the trough launch_callback per launch request. The launch_callback is not reused for subsequent launch requests.
+- It is now possible to format the text in the asset manager progress bar
+  display using dictionary keys. If the format string contains %( the asset
+  manager calls the string % operator with a dictionary instead of a tuple.
 
-Check the trough switches in between ejects, not at the end of all ball launches
-This makes the ball saver react faster, otherwise it might elapse before we get to it
+  The available dictionary keys are:
+    type: the asset type
+    num: the asset number
+    total: the total number of assets
+    filename: the filepath of the asset
 
-Save multiple balls at a time if multiple balls drained in quick succession (and the ball saver's allow_multiple_saves is True).
+  For example, you can specify
+    line_format: '%(type)s %(num)03d OF %(total)03d'
 
-Require the shooter lane switch be active for the autoplunge_settle_time before the trough concludes the ball eject was successful.
+  If single_line is False, the second line can now be formatted with the
+  new line_format2 property. The default is "%s".
+  For example, you can specify
+    line_format2: '%(filename)s'
 
-Add autoplunge=False parameter to Trough.launch_balls(self, num, callback=None, stealth=False, autoplunge=False). The method launch_and_autoplunge_balls(self, num) is kept for backwards compatibility.
+- Added method Font.drawHD(self, frame, text, x, y, line_color, line_width,
+   interior_color, fill_color, font_size=None) to simplify compatibility
+  between raster fonts and HD fonts. Style parameters are ignored,
+  this is the same as draw(frame, text, x, y).
 
-Add method SkeletonGame.create_switch_monitor() to let subclasses instantiate a subclass of SwitchMonitor
+- Service mode now respects the order of settings in game_user_settings.yaml
+  for its menus
 
-Add method SkeletonGame.create_ball_search() to let subclasses instantiate a subclass of BallSearch
+- New internal method ModeQueue.reset(self) to clear all modes in the queue
 
-Add method SkeletonGame.create_entry_sequence_manager() to let subclasses instantiate a subclass of EntrySequenceManager. The default is to create an instance of HD_EntrySequenceManager
+- Accept a list of modes in self.game.modes.add() and self.game.modes.remove()
 
-Stop the sounds when resetting the game
+- Removing a mode clears its delayed handlers
 
-Suppress the evt_mb_drain event when the game is tilted
+- Improve performance of Mode.is_started()
 
-Add the game, font_plain and font_bold parameters to generate_highscore_frames(categories, game, font_plain, font_bold, width=128, height=32) to pass those parameters to dmd.MarkupFrameGenerator()
+- Remember the trough launch_callback per launch request.
+  The launch_callback is not reused for subsequent launch requests.
 
-BallSearch now stops all delayed handlers upon reset or stop. This makes stop() the same as BallSearch.full_stop(). The method full_stop() is kept only for backwards compatibility.
+- Add autoplunge=False parameter to Trough.launch_balls(self, num,
+   callback=None, stealth=False, autoplunge=False).
+  The method launch_and_autoplunge_balls(self, num) is kept for
+  backwards compatibility.
 
-Add support for vertical justification with raster fonts in DMDHelper.generateTextLayerFromYaml()
+- Add method is_missing_balls(), default implementation returns true
+  when the trough contains fewer balls than the total number of balls.
+  If a ball is missing, the game will not start immediately and a ball search
+  will be performed. This method can be overridden in subclasses
+  to let the game start even though the trough is not full. For example, 
+  the subclass can return false when it knows the missing balls are in physical
+  locks and the game handles that case gracefully.
+ 
+- Add method SkeletonGame.create_switch_monitor() to let subclasses
+  instantiate a subclass of SwitchMonitor
 
-Add multiplayer.active.row2.y and multiplayer.inactive.row2.y properties in score_display.yaml to make it possible to describe a score layout for DMD
+- Add method SkeletonGame.create_ball_search() to let subclasses instantiate
+  a subclass of BallSearch and still call it like the stock BallSearch
 
-Delete duplicate procgame.service.py  The service module is in procgame.modes.service.py
-You will have to change your imports if you refer to the older location.
+- Add method SkeletonGame.create_entry_sequence_manager() to let subclasses
+  instantiate a subclass of EntrySequenceManager.
+  The default is to create an instance of HD_EntrySequenceManager
 
-Add game Statistics to the service menu, i.e. Audits and High Scores
-Fix the heights of the menu lines in service mode to respect the screen size
-Revert to the original value before the edit if the edit of settings is cancelled.
+- Add support for vertical justification with raster fonts in
+  DMDHelper.generateTextLayerFromYaml()
 
-In Tilted mode, do not stop processing of switches in always_seen_switches
+- Add multiplayer.active.row2.y and multiplayer.inactive.row2.y properties
+  in score_display.yaml to make it possible to describe a score layout for DMD
 
-Add a settings for the number of Tilt Warnings.
-Store the number of remaining tilt warnings in the player state as warnings_remaining
+- Add game Statistics to the service menu, i.e. Audits and High Scores
 
-Add method SoundController.stop_all(self)
+- Add a settings for the number of Tilt Warnings.
 
-Remove SDL2 errors when quitting by destroying the renderer and closing the window
+- Store the number of remaining tilt warnings in the player state as
+  warnings_remaining
 
-When loading raster fonts in the dmd format version 0 (8-bit per pixel), ignore most-significant 4 bits in pixel values.
-This is for compatibility with pyprocgame. This will produce a font in greyscale.
+- Add method SoundController.stop_all(self)
 
-Set the default dmd_framerate to 60 in FakePinPROC when using the P-ROC DMD, otherwise the default remains 30.
-This is necessary to match the animation speed of the real P-ROC.
 
-Change the dmd_framerate to 60 in EmptyGameDMD/config.yaml to match the frame rate of the real P-ROC
+Bug fixing:
 
-It is now possible to format the text in the asset manager progress bar display using dictionary keys.
-If the format string contains %( the asset manager calls the string % operator with a dictionary instead of a tuple.
-The available dictionary keys are:
-  type: the asset type
-  num: the asset number
-  total: the total number of assets
-  filename: the filepath of the asset
-For example, you can specify
-  line_format: '%(type)s %(num)03d OF %(total)03d'
-If single_line is False, the second line can now be formatted with the new line_format2 property. The default is "%s".
-For example, you can specify
-  line_format2: '%(filename)s'
+- Fix the run loop to avoid calling a delayed handler when the mode is removed
+  within the same tick cycle
 
-Check if there is a drain_callback before calling it in Trough class
+- Fix the run loop to avoid calling mode_tick() when the mode is removed
+  in that tick cycle
 
-Fix execution of delayed handlers registered with no delay (delay=0). Depending on the time resolution, they were sometimes filtered out at the end of dispatch_delayed and never executed.
+- Fix execution of delayed handlers registered with no delay (delay=0).
+  Depending on the time resolution, they were sometimes filtered out at the end
+  of dispatch_delayed and never executed.
+
+- Throw if a delayed handler is registered with a negative delay
+
+- Export service module in procgame __init__.py
+
+- Fixed the keyboard mapping of left shift to left flipper switch in EmptyGame
+  config.yaml. Similarly for right shift to right flipper switch.
+
+- Improved sample yaml file for Judge Dredd machine (JD.yaml)
+
+- Add the number of rgbshows in the total count of assets
+  Do not count font styles in the total number of assets
+
+- TextLayer.set_text(self, text, seconds=None, blink_frames=None)
+  sets self.text_width and self.text_height like HDTextLayer
+
+- Fix ScriptedLayer.reset(self) to reset the transition state too
+
+- Fix sdl2_DisplayManager.make_bits_from_texture(self, texture, width, height,
+   mode="RGBA") implementation to read the texture pixels from the
+   texture renderer.
+
+- Show the connection failure message and the USB hints only if the screen is
+  wider than 128. That message is too long for DMD.
+
+- Check the trough switches in between ejects, not at the end of all
+  ball launches. This makes the ball saver react faster,
+  otherwise it might elapse before we get to it
+
+- Save multiple balls at a time if multiple balls drained in quick succession
+  (and the ball saver's allow_multiple_saves is True).
+
+- Require the shooter lane switch be active for the autoplunge_settle_time
+  before the trough concludes the ball eject was successful.
+
+- Stop the sounds when resetting the game
+
+- Suppress the evt_mb_drain event when the game is tilted
+
+- Add the game, font_plain and font_bold parameters to
+  generate_highscore_frames(categories, game, font_plain, font_bold,
+   width=128, height=32) to pass those parameters to dmd.MarkupFrameGenerator()
+
+- BallSearch now stops all delayed handlers upon reset or stop.
+  This makes stop() the same as BallSearch.full_stop().
+  The method full_stop() is kept only for backwards compatibility.
+
+- Delete duplicate procgame.service.py
+  The service module is in procgame.modes.service.py
+  You will have to change your imports if you refer to the older location.
+
+- Fix the heights of the menu lines in service mode to respect the screen size
+
+- When editing a settings in service mode, revert to the original value
+  before the edit if the edit is cancelled.
+
+- In Tilted mode, do not stop processing of switches in always_seen_switches
+
+- Remove SDL2 errors when quitting by destroying the renderer and
+  closing the window
+
+- When loading raster fonts in the dmd format version 0 (8-bit per pixel),
+  ignore most-significant 4 bits in pixel values.
+  This is for compatibility with pyprocgame.
+  This will produce a font in greyscale.
+
+- Set the default dmd_framerate to 60 in FakePinPROC when using the P-ROC DMD,
+  otherwise the default remains 30.
+  This is necessary to match the animation speed of the real P-ROC.
+
+- Change the dmd_framerate to 60 in EmptyGameDMD/config.yaml to match
+  the frame rate of the real P-ROC
+
+- Check if there is a drain_callback before calling it in Trough class
